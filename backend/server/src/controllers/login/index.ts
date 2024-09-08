@@ -1,9 +1,8 @@
 import express from "express";
+import LoginController from "./login.controller";
 
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  res.send("Hello World!");
-});
+router.get("/guest", LoginController.loginGuest);
 
 export default router;
