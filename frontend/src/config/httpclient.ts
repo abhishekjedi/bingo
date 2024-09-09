@@ -17,33 +17,37 @@ class HttpClient {
     });
   }
 
-  async baseRequest<T>(config: AxiosRequestConfig) {
+  async baseRequest(config: AxiosRequestConfig) {
     try {
-      const response = await HttpClient.axiosInstance.request<T>(config);
+      const response = await HttpClient.axiosInstance.request(config);
 
       return {
         isError: false,
-        data: response.data,
-        msg: "data recieved",
+        data: response?.data?.data,
+        msg: response?.data?.message || "data recieved",
       };
-    } catch (err) {
+      // eslint-disable-next-line
+    } catch (err: any) {
       if (err instanceof AxiosError) {
         return {
           isError: true,
           data: err.response?.data,
-          msg: err.response?.statusText,
+          msg:
+            err.response?.data?.message ||
+            err.response?.statusText ||
+            "something went wrong",
         };
       } else {
         return {
           isError: true,
           data: err,
-          msg: err,
+          msg: (err.message as string) || "something went wrong",
         };
       }
     }
   }
 
-  async get<T>(requestParams: getRequest) {
+  async get(requestParams: getRequest) {
     const config: AxiosRequestConfig = {
       url: `${baseUrl}${requestParams.url}`,
       method: "get",
@@ -51,10 +55,10 @@ class HttpClient {
         "Content-Type": "application/json",
       },
     };
-    return this.baseRequest<T>(config);
+    return this.baseRequest(config);
   }
 
-  async post<T, U>(requestParams: postRequest<U>) {
+  async post<U>(requestParams: postRequest<U>) {
     const config: AxiosRequestConfig = {
       url: `${baseUrl}${requestParams.url}`,
       method: "post",
@@ -62,10 +66,10 @@ class HttpClient {
         "Content-Type": "application/json",
       },
     };
-    return this.baseRequest<T>(config);
+    return this.baseRequest(config);
   }
 
-  async delete<T, U>(requestParams: deleteRequest<U>) {
+  async delete<U>(requestParams: deleteRequest<U>) {
     const config: AxiosRequestConfig = {
       url: `${baseUrl}${requestParams.url}`,
       method: "delete",
@@ -73,10 +77,10 @@ class HttpClient {
         "Content-Type": "application/json",
       },
     };
-    return this.baseRequest<T>(config);
+    return this.baseRequest(config);
   }
 
-  async put<T, U>(requestParams: putRequest<U>) {
+  async put<U>(requestParams: putRequest<U>) {
     const config: AxiosRequestConfig = {
       url: `${baseUrl}${requestParams.url}`,
       method: "post",
@@ -84,7 +88,7 @@ class HttpClient {
         "Content-Type": "application/json",
       },
     };
-    return this.baseRequest<T>(config);
+    return this.baseRequest(config);
   }
 }
 
