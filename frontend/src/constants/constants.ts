@@ -5,6 +5,10 @@ const CONSTANTS = {
       KEY: "1",
     },
   },
+  LOCAL_STORAGE_KEYS: {
+    TOKEN: "token",
+    USER_ID: "userId",
+  },
 };
 
 export default CONSTANTS;

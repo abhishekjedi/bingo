@@ -1,43 +1,32 @@
-import { useEffect, useState } from "react";
-import { guestLogin } from "../../services/login/login.service";
-import { GuestLoginResponse, HomeState } from "./home.types";
-import { setItemInLocalStorage } from "../../helpers/localstorage";
-import homeLoadingLottie from "../../assets/lottie/home_loading_lottie.json";
-import Player from "../../components/player";
+import { useContext } from "react";
 import styles from "./style.module.scss";
+import { AuthContext } from "../../context/auth";
+import Player from "../../components/player";
+import classNames from "classnames";
+import homeLottie from "../../assets/lottie/home_loading_lottie.json";
+import homeLogo from "../../assets/logo.webp";
 
 function Home() {
-  const [homeState, setHomeState] = useState<HomeState>({
-    isLoading: true,
-    isError: false,
-  });
-  async function fetchGuestUserToken() {
-    const response = await guestLogin();
-    console.log("response is ", response);
-    if (response.isError) {
-      setHomeState({
-        isLoading: false,
-        isError: true,
-      });
-      return;
-    }
-    setHomeState({
-      isLoading: true,
-      isError: false,
-    });
-    const data = response.data as GuestLoginResponse;
-    setItemInLocalStorage("token", data.token);
-    setItemInLocalStorage("userId", data.userId);
-  }
-  useEffect(() => {
-    fetchGuestUserToken();
-  });
+  const { token } = useContext(AuthContext);
   return (
     <div className={styles?.home_container}>
       <div className={styles?.home_loading_lottie}>
-        {homeState.isLoading ? (
-          <Player loop animationData={homeLoadingLottie} />
-        ) : null}
+        {token === "" ? (
+          <Player animationData={homeLottie} loop />
+        ) : (
+          <div className={styles.home_screen}>
+            <p className={styles.title}>BINGO</p>
+            <img src={homeLogo} className={styles?.home_image} alt="" />
+            <div className={styles.button_container}>
+              <button className={classNames(styles.btn, styles.btn_online)}>
+                Play Online
+              </button>
+              <button className={classNames(styles.btn, styles.btn_offline)}>
+                Play Offline
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

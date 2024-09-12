@@ -1,11 +1,16 @@
-import './App.css'
-import AppRouter from './router/appRouter'
+import "./App.css";
+import AuthManager from "./context/auth";
+import SocketManager from "./context/socket";
+import AppRouter from "./router/appRouter";
 
 function App() {
-
   return (
-   <AppRouter/>
-  )
+    <AuthManager>
+      <SocketManager>
+        <AppRouter />
+      </SocketManager>
+    </AuthManager>
+  );
 }
 
-export default App
+export default App;

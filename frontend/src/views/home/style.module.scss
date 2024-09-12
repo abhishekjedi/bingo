@@ -1,10 +1,64 @@
-.home_container{
+// Variables for colors and fonts
+$secondary-color: #024950; // Blue 
+$primary-color: #003135; // Light Blue
+$button-bg: #024950; // Darker Blue 0fa4af 024950
+$button-hover-bg: #0fa4af;
+$text-color: #ffffff;
+$font-family: 'Poppins', sans-serif;
+
+// Gradient background with subtle pattern
+.home_screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient( $secondary-color,  $primary-color);
+  background-size:contain;
+  font-family: $font-family;
+  
+
+  .home_image{
+    height: 300px;
+    margin-bottom: 50px;
+    background-color: transparent;
+  }
+
+  .title {
+    font-size: 3rem;
+    color: $text-color;
+    margin-bottom: 2rem;
+    font-weight: 600;
+  }
+  
+
+  .button_container {
     display: flex;
-    flex-direction: column;
-    height: 100vh;
+    gap: 20px;
+
+    .btn {
+      padding: 1rem 2.5rem;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: $text-color;
+      background-color: $button-bg;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: $button-hover-bg;
+      }
+    }
+
+    .btn_online {
+      background-color: $button-bg;
+    }
+
+    .btn_offline {
+      background-color: $button-bg;
+    }
+  }
 }
 
-.home_loading_lottie{
-    align-self: center;
-    margin-top: 30vh ;
-}
