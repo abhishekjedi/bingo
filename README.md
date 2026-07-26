@@ -84,6 +84,40 @@ player in the match is the admin. `CANCEL_FIND_MATCH` leaves the queue, and disc
 does so automatically. Players matched on different server instances are joined to the
 room over a Redis pub/sub channel, so this works with more than one server.
 
+## Playing a bot
+
+`PLAY_BOT { totalMatchesCount, botCount }` creates a solo game against one or more
+bots. The room is opened immediately (there is no lobby to wait in) and the bots'
+boards are pre-filled, so you go straight to filling your own.
+
+Bots are ordinary players in the engine — entries in the player list with
+`isBot: true`. They appear in the player list and leaderboard, their boards are
+included in the end-of-match reveal, and the game is persisted to history exactly
+like a human game. Nothing in the game rules is special-cased for them.
+
+**The bot cannot see your board.** All of its logic lives in `services/bot`, which
+imports only pure board helpers — it has no reference to `Game` and no access to the
+`boards` map. `Game` exposes a single accessor:
+
+```ts
+getBotView(userId) -> { board, movesPlayed }
+```
+
+which throws unless the id belongs to a bot, and returns a *copy* of that bot's own
+board plus the publicly called numbers. Adding a cheating bot would require changing
+that signature rather than quietly reading another board.
+
+Strategy is a greedy one-ply lookahead: for each uncalled number it simulates the
+call and counts how many of its own lines would complete, taking the best and
+breaking ties at random. Note this only rewards lines that complete *immediately* —
+it has no notion of a line sitting at 4/5 — so for most of a match every candidate
+ties at zero and the choice is effectively random. Its real edge is that it never
+misses a completing call and never forgets to claim.
+
+A bot claims bingo as soon as it holds five lines, on anyone's turn, not just its
+own. Because a claim credits every player holding a bingo at that instant, a bot
+claiming first never costs you a win you had earned.
+
 ## Environment
 
 | Variable | Default |
@@ -99,6 +133,8 @@ room over a Redis pub/sub channel, so this works with more than one server.
 | `FRONTEND_URL` | `http://localhost:5180` |
 | `TOKEN_EXPIRY` | `1d` |
 | `TURN_TIMEOUT_MS` | 30000 |
+| `BOT_MOVE_DELAY_MS` | 1200 |
+| `BOT_CLAIM_DELAY_MS` | 900 |
 | `HEARTBEAT_INTERVAL_MS` | 30000 |
 | `GAME_TTL_SECONDS` | 21600 |
 
@@ -120,7 +156,7 @@ as `ERROR` naming the offending field, e.g. `position: Too small: expected numbe
 be >=1`.
 
 Client to server: `CREATE_GAME`, `JOIN_GAME`, `LEAVE_GAME`, `FIND_MATCH`,
-`CANCEL_FIND_MATCH`, `OPEN_GAME`,
+`CANCEL_FIND_MATCH`, `PLAY_BOT`, `OPEN_GAME`,
 `FILL_NUMBERS`, `RANDOM_FILL`, `NUMBER_FILLED`, `START_GAME`, `MOVE`, `BINGO`,
 `RESTART_MATCH`.
 
