@@ -5,8 +5,7 @@ import { getInitialCellValues, getNumberOfCells } from "./helper";
 function Match() {
   const [currentNumber, setCurrentNumber] = useState(1);
 
-  // eslint-disable-next-line
-  const [isMatchRunning, setIsMatchRunning] = useState(false);
+  const [isMatchRunning] = useState(false);
 
   const [cellValues, setCellValues] = useState(getInitialCellValues());
 

@@ -3,8 +3,11 @@ import {
   AuthContext as AuthContextType,
   AuthManagerProps,
   GuestLoginResponse,
-} from "./auth.context.types";
-import { guestLogin } from "../../services/login/login.service";
+} from "./auth.manager.types";
+import {
+  getGoogleLoginUrl,
+  guestLogin,
+} from "../../services/login/login.service";
 import {
   getItemFromLocalStorage,
   setItemInLocalStorage,
@@ -15,7 +18,31 @@ const defaultAuthContextValue = {
   token: "",
   userId: "",
   generateToken: () => Promise.resolve(),
+  loginWithGoogle: () => {},
 };
+
+function readTokenFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  if (!token) return null;
+
+  params.delete("token");
+  const query = params.toString();
+  window.history.replaceState(
+    {},
+    "",
+    `${window.location.pathname}${query ? `?${query}` : ""}`
+  );
+  return token;
+}
+
+function readUserIdFromToken(token: string) {
+  try {
+    return JSON.parse(atob(token.split(".")[1])).userId || "";
+  } catch {
+    return "";
+  }
+}
 
 export const AuthContext = createContext<AuthContextType>(
   defaultAuthContextValue
@@ -29,27 +56,41 @@ const AuthManager = ({ children }: AuthManagerProps) => {
     getItemFromLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.USER_ID) || ""
   );
 
+  function persistSession(nextToken: string, nextUserId: string) {
+    setItemInLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.TOKEN, nextToken);
+    setItemInLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.USER_ID, nextUserId);
+    setToken(nextToken);
+    setUserId(nextUserId);
+  }
+
   async function generateToken() {
     const response = await guestLogin();
-    console.log("response is ", response);
     if (response.isError) {
-      console.log(response.msg);
+      console.error(response.msg);
       return;
     }
     const data = response.data as GuestLoginResponse;
-    setItemInLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.TOKEN, data.token);
-    setItemInLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.USER_ID, data.userId);
-    setToken(data.token);
-    setUserId(data.userId);
+    persistSession(data.token, data.userId);
+  }
+
+  function loginWithGoogle() {
+    window.location.href = getGoogleLoginUrl();
   }
 
   useEffect(() => {
+    const oauthToken = readTokenFromUrl();
+    if (oauthToken) {
+      persistSession(oauthToken, readUserIdFromToken(oauthToken));
+      return;
+    }
     if (token !== "" && userId !== "") return;
     generateToken();
   }, [token, userId]);
 
   return (
-    <AuthContext.Provider value={{ token, userId, generateToken }}>
+    <AuthContext.Provider
+      value={{ token, userId, generateToken, loginWithGoogle }}
+    >
       {children}
     </AuthContext.Provider>
   );
