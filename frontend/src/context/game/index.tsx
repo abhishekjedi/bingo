@@ -151,6 +151,15 @@ function GameManager({ children }: GameManagerProps) {
     send({ type: MESSAGES.CANCEL_FIND_MATCH });
   }, [send]);
 
+  const playBot = useCallback(
+    (totalMatchesCount: number, botCount: number) => {
+      setError("");
+      setGameNotFound(false);
+      send({ type: MESSAGES.PLAY_BOT, totalMatchesCount, botCount });
+    },
+    [send]
+  );
+
   const createGame = useCallback(
     (
       gameId: string,
@@ -250,6 +259,7 @@ function GameManager({ children }: GameManagerProps) {
         clearMatchedGame,
         findMatch,
         cancelFindMatch,
+        playBot,
         createGame,
         joinGame,
         leaveGame,

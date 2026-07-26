@@ -42,6 +42,10 @@ export const incomingMessageSchema = z.discriminatedUnion("type", [
     totalPlayersCount: playersCount.default(2),
   }),
   lobbyOnly(CONSTANTS.MESSAGES.CANCEL_FIND_MATCH, {}),
+  lobbyOnly(CONSTANTS.MESSAGES.PLAY_BOT, {
+    totalMatchesCount: matchesCount.default(3),
+    botCount: z.coerce.number().int().min(1).max(MAX_PLAYERS - 1).default(1),
+  }),
   inGame(CONSTANTS.MESSAGES.JOIN_GAME),
   inGame(CONSTANTS.MESSAGES.LEAVE_GAME),
   inGame(CONSTANTS.MESSAGES.OPEN_GAME),

@@ -24,6 +24,7 @@ function Home() {
     clearMatchedGame,
     findMatch,
     cancelFindMatch,
+    playBot,
     createGame,
     joinGame,
   } = useContext(GameContext);
@@ -158,6 +159,14 @@ function Home() {
             onClick={() => findMatch(matches, players)}
           >
             Play online
+          </button>
+
+          <button
+            className={styles.ghost}
+            disabled={!connected}
+            onClick={() => playBot(matches, Math.max(players - 1, 1))}
+          >
+            Play a bot
           </button>
 
           <button

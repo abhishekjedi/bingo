@@ -1,5 +1,6 @@
 import CONSTANTS from "../../constants/constants";
 import env from "../../utils/environment";
+import { BotView } from "../bot/bot.types";
 import {
   countCompletedLines,
   createEmptyBoard,
@@ -21,6 +22,15 @@ import {
   PlayerStatus,
   RevealedBoard,
 } from "./game.types";
+
+const shuffledNumbers = () => {
+  const numbers = [...Array(TOTAL_CELLS).keys()].map((i) => `${i + 1}`);
+  for (let i = numbers.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
+  }
+  return numbers;
+};
 
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 8;
@@ -189,6 +199,36 @@ class Game {
     return this.matchHistory;
   }
 
+  isBotPlayer(userId: string) {
+    return (
+      this.players.find((player) => player.userId === userId)?.isBot === true
+    );
+  }
+
+  hasBots() {
+    return this.players.some((player) => player.isBot);
+  }
+
+  getBotView(userId: string): BotView {
+    if (!this.isBotPlayer(userId)) {
+      throw new Error("Only bots have a bot view");
+    }
+
+    return {
+      board: [...(this.boards[userId] || [])],
+      movesPlayed: parseMoves(this.currentMatchMoves),
+    };
+  }
+
+  fillBotBoards() {
+    this.players
+      .filter((player) => player.isBot)
+      .forEach((player) => {
+        this.boards[player.userId] = shuffledNumbers();
+      });
+  }
+
+
   getCurrentMatchNumber() {
     return this.currentMatchNumber;
   }
@@ -319,14 +359,8 @@ class Game {
       throw new Error("Player is not part of this game");
     }
 
-    const numbers = [...Array(TOTAL_CELLS).keys()].map((i) => `${i + 1}`);
-    for (let i = numbers.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
-    }
-
-    this.boards[userId] = numbers;
-    return [...numbers];
+    this.boards[userId] = shuffledNumbers();
+    return [...this.boards[userId]];
   }
 
   allNumbersFilled(userId: string) {

@@ -10,6 +10,7 @@ export enum GameState {
 export type Player = {
   userId: string;
   userName: string;
+  isBot?: boolean;
 };
 
 export type LeaderboardEntry = Player & {

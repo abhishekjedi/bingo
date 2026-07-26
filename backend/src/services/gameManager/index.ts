@@ -7,11 +7,17 @@ import { gameStore } from "../gameStore";
 import { roomBus } from "../roomBus";
 import { turnTimer } from "../turnTimer";
 import { decode, encode, MessageOfType, parseIncomingMessage } from "../../protocol";
+import { randomUUID } from "crypto";
+import { bingoBot } from "../bot";
 import { cancelSeek, findMatch } from "../matchmaking";
+import { generateGameCode } from "../game/gameCode";
 import { persistCompletedGame } from "../persistence";
 import { JoinEnvelope } from "../roomBus/roomBus.types";
 
 type Messages = typeof CONSTANTS.MESSAGES;
+
+const BOT_MOVE_DELAY_MS = Number(process.env.BOT_MOVE_DELAY_MS) || 1200;
+const BOT_CLAIM_DELAY_MS = Number(process.env.BOT_CLAIM_DELAY_MS) || 900;
 
 class GameManager {
   private users: User[];
@@ -112,6 +118,9 @@ class GameManager {
 
       case CONSTANTS.MESSAGES.FIND_MATCH:
         return this.handleFindMatch(user, message);
+
+      case CONSTANTS.MESSAGES.PLAY_BOT:
+        return this.handlePlayBot(user, message);
 
       case CONSTANTS.MESSAGES.CANCEL_FIND_MATCH:
         return this.handleCancelFindMatch(user);
@@ -268,6 +277,202 @@ class GameManager {
     );
   }
 
+  private async handlePlayBot(
+    user: User,
+    message: MessageOfType<Messages["PLAY_BOT"]>
+  ) {
+    await cancelSeek(user.userId);
+
+    const bots = [...Array(message.botCount).keys()].map((index) => ({
+      userId: `bot:${randomUUID()}`,
+      userName: message.botCount > 1 ? `Bot ${index + 1}` : "Bot",
+      isBot: true,
+    }));
+
+    const game = Game.createForPlayers(
+      generateGameCode(),
+      [{ userId: user.userId, userName: user.userName }, ...bots],
+      message.totalMatchesCount,
+      bots.length + 1
+    );
+
+    game.openGame(user.userId);
+    game.fillBotBoards();
+
+    const created = await gameStore.create(game);
+    if (!created) {
+      throw new Error("Could not start the bot game");
+    }
+
+    socketManager.addUser(user, game.gameId);
+
+    socketManager.sendToUser(
+      user,
+      encode({
+        type: CONSTANTS.MESSAGES.GAME_CREATED,
+        message: "Playing against a bot",
+        gameId: game.gameId,
+      })
+    );
+    socketManager.sendToUser(user, this.buildStatePayload(game, user.userId));
+  }
+
+  private scheduleBotAction(game: Game) {
+    if (!game.hasBots()) {
+      return;
+    }
+
+    const currentPlayer = game.getIdOfPlayerWithCurrentMove();
+    if (!currentPlayer) {
+      return;
+    }
+
+    const gameId = game.gameId;
+    const moveNumber = game.getMoveNumber();
+
+    const readyBot = game
+      .getPlayers()
+      .find(
+        (player) =>
+          player.isBot && bingoBot.shouldClaimBingo(game.getBotView(player.userId))
+      );
+
+    if (readyBot) {
+      setTimeout(() => {
+        this.performBotClaim(gameId, readyBot.userId, moveNumber).catch(
+          (error) => console.error("bot claim failed", error)
+        );
+      }, BOT_CLAIM_DELAY_MS);
+      return;
+    }
+
+    if (!game.isBotPlayer(currentPlayer)) {
+      return;
+    }
+
+    setTimeout(() => {
+      this.performBotTurn(gameId, moveNumber).catch((error) =>
+        console.error("bot turn failed", error)
+      );
+    }, BOT_MOVE_DELAY_MS);
+  }
+
+  private async performBotClaim(
+    gameId: string,
+    botId: string,
+    expectedMoveNumber: number
+  ) {
+    const { game, result } = await gameStore.mutate(gameId, (currentGame) => {
+      if (currentGame.getMoveNumber() !== expectedMoveNumber) {
+        return null;
+      }
+
+      if (
+        !currentGame.isBotPlayer(botId) ||
+        !bingoBot.shouldClaimBingo(currentGame.getBotView(botId))
+      ) {
+        return null;
+      }
+
+      return currentGame.claimBingo(botId);
+    });
+
+    if (!game || !result) {
+      return;
+    }
+
+    await roomBus.broadcast(
+      game.gameId,
+      encode({ ...result, gameId: game.gameId })
+    );
+
+    if (game.isOver()) {
+      await this.finishGame(game);
+      return;
+    }
+
+    await this.broadcastState(game);
+    await this.syncTurnTimer(game);
+  }
+
+  private async performBotTurn(gameId: string, expectedMoveNumber: number) {
+    const { game, result } = await gameStore.mutate(gameId, (currentGame) => {
+      if (currentGame.getMoveNumber() !== expectedMoveNumber) {
+        return null;
+      }
+
+      const botId = currentGame.getIdOfPlayerWithCurrentMove();
+      if (!botId || !currentGame.isBotPlayer(botId)) {
+        return null;
+      }
+
+      const view = currentGame.getBotView(botId);
+
+      if (bingoBot.shouldClaimBingo(view)) {
+        return {
+          move: null,
+          playedBy: botId,
+          matchResult: currentGame.claimBingo(botId),
+        };
+      }
+
+      const move = bingoBot.chooseMove(view);
+      if (!move) {
+        return null;
+      }
+
+      let matchResult = currentGame.addMove(move, botId);
+
+      if (
+        !matchResult &&
+        bingoBot.shouldClaimBingo(currentGame.getBotView(botId))
+      ) {
+        matchResult = currentGame.claimBingo(botId);
+      }
+
+      return { move, playedBy: botId, matchResult };
+    });
+
+    if (!game || !result) {
+      return;
+    }
+
+    if (result.move) {
+      await roomBus.broadcastPerUser(
+        game.gameId,
+        this.perPlayer(game, (userId) =>
+          encode({
+            type: CONSTANTS.MESSAGES.MOVE,
+            gameId: game.gameId,
+            move: result.move,
+            playedBy: result.playedBy,
+            isYourMove: game.getIdOfPlayerWithCurrentMove() === userId,
+            turnDeadline: game.getTurnDeadline(),
+          })
+        )
+      );
+    }
+
+    if (result.matchResult) {
+      await roomBus.broadcast(
+        game.gameId,
+        encode({ ...result.matchResult, gameId: game.gameId })
+      );
+    }
+
+    if (game.isOver()) {
+      await this.finishGame(game);
+      return;
+    }
+
+    if (result.matchResult) {
+      await this.broadcastState(game);
+    }
+
+    await this.syncTurnTimer(game);
+    this.scheduleBotAction(game);
+  }
+
   private async handleCancelFindMatch(user: User) {
     const cancelled = await cancelSeek(user.userId);
 
@@ -329,6 +534,7 @@ class GameManager {
 
     await this.broadcastState(game);
     await this.syncTurnTimer(game);
+    this.scheduleBotAction(game);
   }
 
   private async handleSocketReconnection(user: User) {
@@ -586,6 +792,7 @@ class GameManager {
     );
 
     await this.syncTurnTimer(game);
+    this.scheduleBotAction(game);
   }
 
   private async handleMove(
@@ -632,6 +839,7 @@ class GameManager {
     }
 
     await this.syncTurnTimer(game);
+    this.scheduleBotAction(game);
   }
 
   private async handleBingo(
@@ -659,15 +867,17 @@ class GameManager {
 
     await this.broadcastState(game);
     await this.syncTurnTimer(game);
+    this.scheduleBotAction(game);
   }
 
   private async handleRestartMatch(
     user: User,
     message: MessageOfType<Messages["RESTART_MATCH"]>
   ) {
-    const { game } = await gameStore.mutate(message.gameId, (currentGame) =>
-      currentGame.restartMatch(user.userId)
-    );
+    const { game } = await gameStore.mutate(message.gameId, (currentGame) => {
+      currentGame.restartMatch(user.userId);
+      currentGame.fillBotBoards();
+    });
 
     if (!game) {
       return this.sendGameNotFound(user);

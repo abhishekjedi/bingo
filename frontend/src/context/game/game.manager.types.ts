@@ -49,6 +49,7 @@ export type GameContextType = {
   clearMatchedGame: () => void;
   findMatch: (totalMatchesCount: number, totalPlayersCount: number) => void;
   cancelFindMatch: () => void;
+  playBot: (totalMatchesCount: number, botCount: number) => void;
   createGame: (
     gameId: string,
     totalMatchesCount: number,
