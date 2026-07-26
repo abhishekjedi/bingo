@@ -1,0 +1,93 @@
+@use "../../styles/variables" as *;
+
+.reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: $font-family;
+  width: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  @include label;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.winner {
+  border-color: rgba(233, 180, 76, 0.55);
+  background: rgba(233, 180, 76, 0.08);
+}
+
+.player_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.name {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.lines {
+  font-size: 0.72rem;
+  color: $faint-text;
+}
+
+.lines_win {
+  color: $accent-color;
+  font-weight: 600;
+}
+
+.called {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.called_list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+}
+
+.called_item {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  color: $muted-text;
+}

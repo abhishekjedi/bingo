@@ -8,6 +8,11 @@ import {
 
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
+function authHeaders() {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 class HttpClient {
   static axiosInstance: AxiosInstance;
 
@@ -53,6 +58,7 @@ class HttpClient {
       method: "get",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(),
       },
     };
     return this.baseRequest(config);
@@ -64,6 +70,7 @@ class HttpClient {
       method: "post",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(),
       },
     };
     return this.baseRequest(config);
@@ -75,6 +82,7 @@ class HttpClient {
       method: "delete",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(),
       },
     };
     return this.baseRequest(config);
@@ -86,6 +94,7 @@ class HttpClient {
       method: "post",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(),
       },
     };
     return this.baseRequest(config);

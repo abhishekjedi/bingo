@@ -28,6 +28,7 @@ const history = async ({ res, user }: RouteContext) => {
     leaderboard: game.leaderboard,
     playedAt: game.completedAt || game.updatedAt,
     totalMatches: game.snapshot.totalMatchesCount,
+    matches: game.snapshot.matchHistory || [],
   }));
 
   return successResponse(res, { games: summaries }, "game history");

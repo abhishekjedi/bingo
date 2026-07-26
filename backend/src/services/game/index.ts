@@ -1,6 +1,7 @@
 import CONSTANTS from "../../constants/constants";
 import env from "../../utils/environment";
 import {
+  countCompletedLines,
   createEmptyBoard,
   EMPTY_CELL,
   isAllNumbersFilled,
@@ -14,9 +15,11 @@ import {
   GameSnapshot,
   GameState,
   LeaderboardEntry,
+  MatchRecord,
   MatchResult,
   Player,
   PlayerStatus,
+  RevealedBoard,
 } from "./game.types";
 
 export const MIN_PLAYERS = 2;
@@ -35,6 +38,7 @@ class Game {
   private currentMatchMoves: string;
   private winners: Record<string, number>;
   private turnDeadline: number | null;
+  private matchHistory: MatchRecord[];
 
   private constructor(snapshot: GameSnapshot) {
     this.gameId = snapshot.gameId;
@@ -48,6 +52,7 @@ class Game {
     this.currentMatchMoves = snapshot.currentMatchMoves;
     this.winners = snapshot.winners;
     this.turnDeadline = snapshot.turnDeadline;
+    this.matchHistory = snapshot.matchHistory || [];
   }
 
   static create(
@@ -115,6 +120,7 @@ class Game {
       currentMatchMoves: "",
       winners,
       turnDeadline: null,
+      matchHistory: [],
     });
   }
 
@@ -135,6 +141,7 @@ class Game {
       currentMatchMoves: this.currentMatchMoves,
       winners: this.winners,
       turnDeadline: this.turnDeadline,
+      matchHistory: this.matchHistory,
     };
   }
 
@@ -176,6 +183,10 @@ class Game {
 
   getTurnDeadline() {
     return this.turnDeadline;
+  }
+
+  getMatchHistory(): MatchRecord[] {
+    return this.matchHistory;
   }
 
   getCurrentMatchNumber() {
@@ -459,6 +470,26 @@ class Game {
       this.winners[player.userId] += 1;
     });
 
+    const revealedBoards: RevealedBoard[] = this.players.map((player) => ({
+      ...player,
+      board: [...this.boards[player.userId]],
+      completedLines: countCompletedLines(
+        this.currentMatchMoves,
+        this.boards[player.userId]
+      ),
+      hasBingo: isBingoDone(this.currentMatchMoves, this.boards[player.userId]),
+    }));
+
+    const match: MatchRecord = {
+      matchNumber: this.currentMatchNumber,
+      moves: parseMoves(this.currentMatchMoves),
+      boards: revealedBoards,
+      winners: matchWinners.map((player) => ({ ...player })),
+      endedAt: Date.now(),
+    };
+
+    this.matchHistory.push(match);
+
     const leaderboard = this.getLeaderboard();
     const isLastMatch = this.currentMatchNumber >= this.totalMatchesCount;
 
@@ -476,6 +507,7 @@ class Game {
         message: "game is over",
         matchWinners: matchWinners.map((player) => ({ ...player })),
         leaderboard,
+        match,
       };
     }
 
@@ -487,6 +519,7 @@ class Game {
       message: "match is over, start a new match",
       matchWinners: matchWinners.map((player) => ({ ...player })),
       leaderboard,
+      match,
     };
   }
 }

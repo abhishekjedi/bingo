@@ -20,11 +20,26 @@ export type PlayerStatus = Player & {
   hasFilledBoard: boolean;
 };
 
+export type RevealedBoard = Player & {
+  board: string[];
+  completedLines: number;
+  hasBingo: boolean;
+};
+
+export type MatchRecord = {
+  matchNumber: number;
+  moves: string[];
+  boards: RevealedBoard[];
+  winners: Player[];
+  endedAt: number;
+};
+
 export type MatchResult = {
   type: string;
   message: string;
   matchWinners: Player[];
   leaderboard: LeaderboardEntry[];
+  match: MatchRecord;
 };
 
 export type GameSnapshot = {
@@ -39,4 +54,5 @@ export type GameSnapshot = {
   currentMatchMoves: string;
   winners: Record<string, number>;
   turnDeadline: number | null;
+  matchHistory: MatchRecord[];
 };

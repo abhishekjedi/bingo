@@ -1,0 +1,35 @@
+@use "../../styles/variables" as *;
+
+.timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: $font-family;
+  width: 100%;
+  max-width: 340px;
+
+  .track {
+    flex: 1;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .fill {
+    height: 100%;
+    background-color: $accent-color;
+    transition: width 0.2s linear;
+  }
+
+  .urgent {
+    background-color: $danger-color;
+  }
+
+  .value {
+    font-size: 0.85rem;
+    color: $muted-text;
+    min-width: 32px;
+    text-align: right;
+  }
+}

@@ -6,6 +6,8 @@ export type AuthContext = {
   // eslint-disable-next-line
   generateToken: () => Promise<any>;
   loginWithGoogle: () => void;
+  userName: string;
+  isGuest: boolean;
 };
 
 export type AuthManagerProps = {

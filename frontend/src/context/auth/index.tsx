@@ -19,6 +19,8 @@ const defaultAuthContextValue = {
   userId: "",
   generateToken: () => Promise.resolve(),
   loginWithGoogle: () => {},
+  userName: "",
+  isGuest: true,
 };
 
 function readTokenFromUrl() {
@@ -36,11 +38,11 @@ function readTokenFromUrl() {
   return token;
 }
 
-function readUserIdFromToken(token: string) {
+function readTokenPayload(token: string) {
   try {
-    return JSON.parse(atob(token.split(".")[1])).userId || "";
+    return JSON.parse(atob(token.split(".")[1]));
   } catch {
-    return "";
+    return {};
   }
 }
 
@@ -55,6 +57,8 @@ const AuthManager = ({ children }: AuthManagerProps) => {
   const [userId, setUserId] = useState(
     getItemFromLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.USER_ID) || ""
   );
+
+  const payload = token ? readTokenPayload(token) : {};
 
   function persistSession(nextToken: string, nextUserId: string) {
     setItemInLocalStorage(CONSTANTS.LOCAL_STORAGE_KEYS.TOKEN, nextToken);
@@ -80,7 +84,7 @@ const AuthManager = ({ children }: AuthManagerProps) => {
   useEffect(() => {
     const oauthToken = readTokenFromUrl();
     if (oauthToken) {
-      persistSession(oauthToken, readUserIdFromToken(oauthToken));
+      persistSession(oauthToken, readTokenPayload(oauthToken).userId || "");
       return;
     }
     if (token !== "" && userId !== "") return;
@@ -89,7 +93,14 @@ const AuthManager = ({ children }: AuthManagerProps) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, userId, generateToken, loginWithGoogle }}
+      value={{
+        token,
+        userId,
+        generateToken,
+        loginWithGoogle,
+        userName: payload.userName || "",
+        isGuest: payload.isGuest !== false,
+      }}
     >
       {children}
     </AuthContext.Provider>

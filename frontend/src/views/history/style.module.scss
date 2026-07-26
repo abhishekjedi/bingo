@@ -1,0 +1,110 @@
+@use "../../styles/variables" as *;
+
+.history {
+  @include screen;
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+    max-width: 440px;
+    margin-bottom: 30px;
+  }
+
+  .link {
+    background: none;
+    border: none;
+    color: $muted-text;
+    font-family: $font-family;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 6px 2px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $highlight-color;
+    }
+  }
+
+  .title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .empty {
+    color: $muted-text;
+    font-size: 0.95rem;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .card {
+    @include surface(0.045);
+    border-radius: $radius-lg;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 26px 50px -34px rgba(0, 0, 0, 1);
+  }
+
+  .card_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .code {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: $highlight-color;
+  }
+
+  .status {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    color: $on-accent;
+    background: $accent-color;
+    border-radius: 6px;
+    padding: 3px 8px;
+  }
+
+  .toggle {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: $accent-color;
+    font-family: $font-family;
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 2px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .matches {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding-top: 6px;
+  }
+
+  .played {
+    margin: 0;
+    font-size: 0.82rem;
+    color: $faint-text;
+  }
+}

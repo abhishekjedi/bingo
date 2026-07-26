@@ -1,0 +1,251 @@
+@use "../../styles/variables" as *;
+
+.game {
+  @include screen;
+
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 940px;
+    margin-bottom: 30px;
+  }
+
+  .link {
+    justify-self: start;
+    background: none;
+    border: none;
+    color: $muted-text;
+    font-family: $font-family;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 6px 2px;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $highlight-color;
+    }
+  }
+
+  .code {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: $font-family;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+
+    &:hover {
+      border-color: rgba(175, 221, 229, 0.4);
+      background: rgba(255, 255, 255, 0.09);
+    }
+  }
+
+  .code_label {
+    @include label;
+    font-size: 0.62rem;
+  }
+
+  .code_value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    color: $highlight-color;
+  }
+
+  .match_counter {
+    justify-self: end;
+    font-size: 0.85rem;
+    color: $muted-text;
+  }
+
+  .error {
+    background: rgba(179, 55, 45, 0.18);
+    border: 1px solid rgba(179, 55, 45, 0.5);
+    color: #ffd9d0;
+    border-radius: $radius-sm;
+    padding: 9px 16px;
+    margin: 0 0 14px;
+    cursor: pointer;
+    font-size: 0.88rem;
+  }
+
+  .notice {
+    color: $muted-text;
+    margin: 0 0 14px;
+    font-size: 0.9rem;
+  }
+
+  .layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-height: 140px;
+    justify-content: center;
+  }
+
+  .phase_title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .your_turn {
+    color: $accent-strong;
+    text-shadow: 0 0 32px rgba(245, 198, 106, 0.5);
+  }
+
+  .phase_hint {
+    margin: 0;
+    color: $muted-text;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn {
+    @include button;
+  }
+
+  .btn_primary {
+    @include button-primary;
+  }
+
+  .btn_bingo {
+    @include button;
+    background: linear-gradient(135deg, #cf4436, $danger-color);
+    border-color: transparent;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    padding-inline: 2.4rem;
+    box-shadow: 0 12px 32px -14px rgba(207, 68, 54, 0.85);
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #dc5040, #a83329);
+      border-color: transparent;
+    }
+
+    &:disabled {
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: none;
+    }
+  }
+
+  .called {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    max-width: 420px;
+  }
+
+  .called_label {
+    @include label;
+  }
+
+  .called_list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .called_item {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    padding: 3px 9px;
+    font-size: 0.8rem;
+    color: $muted-text;
+  }
+
+  .empty {
+    @include surface(0.045);
+    border-radius: $radius-lg;
+    padding: 34px 40px;
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .empty_title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  .reveal_panel {
+    @include surface(0.04);
+    border-radius: $radius-lg;
+    padding: 20px;
+    max-width: 640px;
+  }
+
+  .overlay_reveal {
+    max-width: 560px;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 17, 20, 0.86);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+
+  .overlay_card {
+    @include surface(0.07);
+    border-radius: $radius-lg;
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 1);
+  }
+
+  .overlay_title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+  }
+}
